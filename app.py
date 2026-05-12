@@ -1,10 +1,25 @@
 from flask import Flask
+from extensions import db, migrate
+from models import Clan
 
-def create_app():
-    app = Flask(__name__)
+app = Flask(__name__)
 
-    @app.route('/')
-    def home():
-        return "Projekt teretana"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@localhost/teretana'
 
-    return app
+db.init_app(app)
+migrate.init_app(app, db)
+
+@app.route('/')
+def index():
+    return "Početna stranica"
+
+@app.route('/clanovi/<ime>/<prezime>/<email>/<mobitel>/<datum_uclanjenja>')
+def clanovi(ime, prezime, email, mobitel, datum_uclanjenja):
+
+    clan = Clan(ime=ime, prezime=prezime, email=email, mobitel=mobitel, datum_uclanjenja=datum_uclanjenja)
+    db.session.add(clan)
+    db.session.commit()
+
+    return "Dodano"
+
+app.run(debug=True)
