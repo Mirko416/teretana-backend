@@ -11,6 +11,7 @@ class Clan(db.Model):
     datum_uclanjenja = db.Column(db.Date, nullable=False)
 
     pretplate = db.relationship('Pretplata', backref='clan', lazy=True)
+    treninzi = db.relationship('Trening', backref='clan', lazy=True)
 
 class Trener(db.Model):
     __tablename__ = 'treneri'
@@ -21,6 +22,7 @@ class Trener(db.Model):
     specijalizacija = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
 
+    treninzi = db.relationship('Trening', backref='trener', lazy=True)
 class Clanarina(db.Model):
     __tablename__ = 'clanarine'
 
@@ -39,3 +41,12 @@ class Pretplata(db.Model):
 
     clan_id = db.Column(db.Integer, db.ForeignKey('clanovi.id'), nullable=True)
     clanarina_id = db.Column(db.Integer, db.ForeignKey('clanarine.id'), nullable=True)
+
+class Treninga(db.Model):
+    __tablename__ = 'treninzi'
+    id = db.Column(db.Integer, primary_key=True)
+    datum = db.Column(db.Date, nullable=False)
+    opis = db.Column(db.String(50), nullable=False)
+
+    clan_id = db.Column(db.Integer, db.ForeignKey('clanovi.id'), nullable=False)
+    trener_id = db.Column(db.Integer, db.ForeignKey('treneri.id'), nullable=False)
