@@ -39,7 +39,7 @@ class Trener(db.Model):
             'id': self.id,
             'ime': self.ime,
             'prezime': self.prezime,
-            'specijalizacija': self.specijalizacja,
+            'specijalizacija': self.specijalizacija,
             'email': self.email,
         }
 
@@ -47,7 +47,7 @@ class Clanarina(db.Model):
     __tablename__ = 'clanarine'
 
     id = db.Column(db.Integer, primary_key=True)
-    ime = db.Column(db.String(50), nullable=False)
+    naziv = db.Column(db.String(50), nullable=False)
     cijena = db.Column(db.Numeric(10,2), nullable=False)
     duzina_trajanja = db.Column(db.Integer, nullable=False)
 
@@ -56,7 +56,7 @@ class Clanarina(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'ime': self.ime,
+            'naziv': self.naziv,
             'cijena': self.cijena,
             'duzina_trajanja': self.duzina_trajanja,
         }

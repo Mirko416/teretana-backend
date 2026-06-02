@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from extensions import db, migrate
-from models import Clan, Trener, Trening
+from models import Clan, Trener, Trening, Clanarina, Pretplata
 from flask_cors import CORS
 from sqlalchemy import or_
 
@@ -110,11 +110,11 @@ def treneri():
             Trener.email.ilike(pojam)
         ))
 
-    upit = upit.order_by(Trener.id)
-    paginacija = upit.paginate(page=page, per_page=per_page, error_out=False)
-
-    if page > paginacija.pages and paginacija.pages > 0:
-        paginacija = upit.paginate(page=paginacija.pages, per_page=per_page, error_out=False)
+    paginacija = upit.order_by(Trener.id).paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
 
     return jsonify({
         "items": [t.to_dict() for t in paginacija.items],
@@ -131,7 +131,7 @@ def trener(id):
     if not trener:
         return {"error": "Trener not found"}, 404
 
-    return trener.to_dict()
+    return jsonify(trener.to_dict())
 
 @app.route('/treneri-dropdown', methods=['GET'])
 def treneri_dropdown():
@@ -237,6 +237,118 @@ def dodaj_trening():
     db.session.commit()
 
     return {"poruka": "Trening dodan"}
+
+@app.route('/clanarine', methods=['GET'])
+def clanarine():
+    q = request.args.get('q', '', type=str)
+    upit = Clanarina.query
+
+    if q:
+        pojam = f"%{q}%"
+        upit = upit.filter(or_(
+            Clanarina.naziv.ilike(pojam),
+            Clanarina.cijena.ilike(pojam),
+            Clanarina.duzina_trajanja.ilike(pojam),
+        ))
+
+    clanarine = upit.all()
+
+    return [clanarina.to_dict() for clanarina in clanarine]
+
+@app.route('/clanarine/<id>', methods=['GET'])
+def clanarina(id):
+    clanarina = Clanarina.query.filter_by(id=id).first()
+
+    return clanarina.to_dict()
+
+@app.route('/clanarine', methods=['POST'])
+def nova_clanarina_crud():
+    data = request.get_json()
+
+    clanarina = Clanarina(
+        naziv=data['naziv'],
+        cijena=data['cijena'],
+        duzina_trajanja=data['duzina_trajanja'],
+    )
+
+    db.session.add(clanarina)
+    db.session.commit()
+
+    return "Uspješno dodana"
+
+@app.route('/clanarine/<id>', methods=['DELETE'])
+def izbrisi_clanarinu(id):
+    clanarina = Clanarina.query.filter_by(id=id).first()
+
+    db.session.delete(clanarina)
+    db.session.commit()
+
+    return "Izbrisano"
+
+@app.route('/clanarine/<id>', methods=['PUT'])
+def uredu_clanarinu(id):
+    clanarina = Clanarina.query.filter_by(id=id).first()
+
+    data = request.get_json()
+
+    clanarina.naziv = data.get('naziv')
+    clanarina.cijena = data.get('cijena')
+    clanarina.duzina_trajanja = data.get('duzina_trajanja')
+
+    db.session.commit()
+
+    return "Napravljene promjene"
+
+@app.route('/pretplate', methods=['GET'])
+def pretplate():
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 5, type=int)
+    q = request.args.get('q', '', type=str)
+
+    upit = Pretplata.query \
+        .outerjoin(Clan, Pretplata.clan_id == Clan.id) \
+        .outerjoin(Clanarina, Pretplata.clanarina_id == Clanarina.id)
+
+    if q:
+        pojam = f"%{q}%"
+        upit = upit.filter(or_(
+            Clan.ime.ilike(pojam),
+            Clan.prezime.ilike(pojam),
+            Clanarina.naziv.ilike(pojam),
+            Clanarina.cijena.ilike(pojam),
+            Pretplata.datum_pocetka.ilike(pojam),
+            Pretplata.datum_zavrsetka.ilike(pojam)
+        ))
+
+    upit = upit.order_by(Pretplata.id)
+    paginacija = upit.paginate(page=page, per_page=per_page, error_out=False)
+
+    if page > paginacija.pages and paginacija.pages > 0:
+        paginacija = upit.paginate(page=paginacija.pages, per_page=per_page, error_out=False)
+
+    return jsonify({
+        "items": [t.to_dict() for t in paginacija.items],
+        "page": paginacija.page,
+        "per_page": paginacija.per_page,
+        "total": paginacija.total,
+        "pages": paginacija.pages
+    })
+
+@app.route('/pretplate', methods=['POST'])
+def dodaj_pretplatu():
+    data = request.get_json()
+
+    novi = Pretplata(
+        clan_id=data.get('clan_id'),
+        clanarina_id=data.get('clanarina_id'),
+        datum_pocetka=data.get('datum_pocetka'),
+        datum_zavrsetka=data.get('datum_zavrsetka'),
+    )
+
+    db.session.add(novi)
+    db.session.commit()
+
+    return {"poruka": "Pretplata dodana"}
 
 if __name__ == "__main__":
     app.run(debug=True)
