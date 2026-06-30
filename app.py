@@ -222,6 +222,20 @@ def treninzi():
         "pages": paginacija.pages
     })
 
+@app.route('/treninzi/<int:id>', methods=['GET'])
+def trening(id):
+    trening = Trening.query.filter_by(id=id).first()
+
+    return jsonify({
+        "id": trening.id,
+        "clan_id": trening.clan_id,
+        "trener_id": trening.trener_id,
+        "datum": trening.datum,
+        "opis": trening.opis,
+        "clan": trening.clan.ime + " " + trening.clan.prezime,
+        "trener": trening.trener.ime + " " + trening.trener.prezime,
+    })
+
 @app.route('/treninzi', methods=['POST'])
 def dodaj_trening():
     data = request.get_json()
@@ -237,6 +251,30 @@ def dodaj_trening():
     db.session.commit()
 
     return {"poruka": "Trening dodan"}
+
+@app.route('/treninzi/<int:id>', methods=['DELETE'])
+def obrisi_trening(id):
+    trening = Trening.query.filter_by(id=id).first()
+
+    db.session.delete(trening)
+    db.session.commit()
+
+    return jsonify({"poruka": "Trening obrisan"})
+
+@app.route('/treninzi/<int:id>', methods=['PUT'])
+def uredi_trening(id):
+    trening = Trening.query.filter_by(id=id).first()
+
+    data = request.json
+
+    trening.clan_id = data.get('clan_id')
+    trening.trener_id = data.get('trener_id')
+    trening.datum =data.get('datum')
+    trening.opis = data.get('opis')
+
+    db.session.commit()
+
+    return jsonify({"poruka": "Trening ažuriran"})
 
 @app.route('/clanarine', methods=['GET'])
 def clanarine():
@@ -349,6 +387,26 @@ def dodaj_pretplatu():
     db.session.commit()
 
     return {"poruka": "Pretplata dodana"}
+
+@app.route('/clanovi/<int:id>/pretplate')
+def pretplate_clana(id):
+    pretplate = Pretplata.query.filter_by(id=id).first()
+
+    return jsonify([
+        {
+            "datum_pocetka": p.datum_pocetka,
+            "datum_zavrsetka": p.datum_zavrsetka,
+        } for p in pretplate
+    ])
+
+@app.route('/dashboard', methods=['GET'])
+def dashboard():
+    return {
+        "clanovi": Clan.query.count(),
+        "treneri": Trener.query.count(),
+        "treninzi": Trening.query.count(),
+        "clanarine": Clanarina.query.count()
+    }
 
 if __name__ == "__main__":
     app.run(debug=True)
