@@ -205,7 +205,7 @@ def treninzi():
             Clan.prezime.ilike(pojam),
             Trener.ime.ilike(pojam),
             Trener.prezime.ilike(pojam),
-            Trening.tip.ilike(pojam)
+            Trening.opis.ilike(pojam)
         ))
 
     upit = upit.order_by(Trening.id)
@@ -390,7 +390,7 @@ def dodaj_pretplatu():
 
 @app.route('/clanovi/<int:id>/pretplate')
 def pretplate_clana(id):
-    pretplate = Pretplata.query.filter_by(id=id).first()
+    pretplate = Pretplata.query.filter_by(clan_id=id).all()
 
     return jsonify([
         {
